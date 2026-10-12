@@ -519,12 +519,12 @@ void dt_to_asm(FILE *f, struct dt_info *dti, int version)
 
 	if (vi->flags & FTF_STRTABSIZE) {
 		fprintf(f, "\t/* size_dt_strings */\n");
-			asm_emit_cell(f, fdt32_to_cpu(fdt.size_dt_strings));
+		asm_emit_cell(f, fdt32_to_cpu(fdt.size_dt_strings));
 	}
 
 	if (vi->flags & FTF_STRUCTSIZE) {
 		fprintf(f, "\t/* size_dt_struct */\n");
-			asm_emit_cell(f, fdt32_to_cpu(fdt.size_dt_struct));
+		asm_emit_cell(f, fdt32_to_cpu(fdt.size_dt_struct));
 	}
 
 	/*
