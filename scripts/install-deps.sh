@@ -3,7 +3,9 @@
 
 if [ "$(uname -s)" = "Darwin" ]
 then
-    brew install --quiet libyaml swig meson ninja pkg-config
+    # Apple's command-line tools may ship older Flex/Bison than current DTC
+    # grammars expect. Homebrew installs these as keg-only on macOS.
+    brew install --quiet libyaml swig meson ninja pkg-config flex bison
     exit 0
 fi
 
