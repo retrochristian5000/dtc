@@ -102,14 +102,36 @@ static struct emitter bin_emitter = {
 static void emit_label(FILE *f, const char *prefix, const char *label)
 {
 	fprintf(f, "\t.globl\t%s_%s\n", prefix, label);
+#ifdef __APPLE__
+	/* dlsym("dt_blob_start") resolves the C symbol _dt_blob_start. */
+	fprintf(f, "\t.globl\t_%s_%s\n", prefix, label);
+#endif
 	fprintf(f, "%s_%s:\n", prefix, label);
 	fprintf(f, "_%s_%s:\n", prefix, label);
+}
+
+/* Preserve ELF symbol names; export the corresponding C ABI aliases on
+ * Mach-O, whose external symbol spelling carries an initial underscore. */
+static void emit_user_label(FILE *f, const char *name, const char *suffix)
+{
+	fprintf(f, "\t.globl\t%s%s\n", name, suffix);
+#ifdef __APPLE__
+	fprintf(f, "\t.globl\t_%s%s\n", name, suffix);
+#endif
+	fprintf(f, "%s%s:\n", name, suffix);
+#ifdef __APPLE__
+	fprintf(f, "_%s%s:\n", name, suffix);
+#endif
 }
 
 static void emit_offset_label(FILE *f, const char *label, int offset)
 {
 	fprintf(f, "\t.globl\t%s\n", label);
 	fprintf(f, "%s\t= . + %d\n", label, offset);
+#ifdef __APPLE__
+	fprintf(f, "\t.globl\t_%s\n", label);
+	fprintf(f, "_%s\t= . + %d\n", label, offset);
+#endif
 }
 
 #define ASM_EMIT_BELONG(f, fmt, ...) \
@@ -174,10 +196,8 @@ static void asm_emit_beginnode(void *e, struct label *labels)
 	FILE *f = e;
 	struct label *l;
 
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s\n", l->label);
-		fprintf(f, "%s:\n", l->label);
-	}
+	for_each_label(labels, l)
+		emit_user_label(f, l->label, "");
 	fprintf(f, "\t/* FDT_BEGIN_NODE */\n");
 	asm_emit_cell(e, FDT_BEGIN_NODE);
 }
@@ -189,10 +209,8 @@ static void asm_emit_endnode(void *e, struct label *labels)
 
 	fprintf(f, "\t/* FDT_END_NODE */\n");
 	asm_emit_cell(e, FDT_END_NODE);
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s_end\n", l->label);
-		fprintf(f, "%s_end:\n", l->label);
-	}
+	for_each_label(labels, l)
+		emit_user_label(f, l->label, "_end");
 }
 
 static void asm_emit_property(void *e, struct label *labels)
@@ -200,10 +218,8 @@ static void asm_emit_property(void *e, struct label *labels)
 	FILE *f = e;
 	struct label *l;
 
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s\n", l->label);
-		fprintf(f, "%s:\n", l->label);
-	}
+	for_each_label(labels, l)
+		emit_user_label(f, l->label, "");
 	fprintf(f, "\t/* FDT_PROP */\n");
 	asm_emit_cell(e, FDT_PROP);
 }
