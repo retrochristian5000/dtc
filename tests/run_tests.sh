@@ -202,7 +202,16 @@ run_dtc_test () {
 }
 
 asm_to_so () {
-    $CC -shared -Wl,-znoexecstack -o $1.test.so "$SRCDIR/data.S" $1.test.s
+    case "$(uname -s)" in
+        Darwin)
+            # Apple ld produces Mach-O dylibs; ELF -z noexecstack is invalid.
+            $CC -dynamiclib -o "$1.test.so" "$SRCDIR/data.S" "$1.test.s"
+            ;;
+        *)
+            $CC -shared -Wl,-z,noexecstack -o "$1.test.so" \
+                "$SRCDIR/data.S" "$1.test.s"
+            ;;
+    esac
 }
 
 asm_to_so_test () {
